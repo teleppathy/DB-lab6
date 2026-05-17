@@ -115,7 +115,7 @@ async function main() {
   });
 
   if (!existingCustomer || !existingFilm) {
-    console.log("❌ Помилка: Спочатку запустіть ваш SQL-скрипт з INSERT-ами в pgAdmin, щоб у базі з'явилися Chase та Inception!");
+    console.log(" Помилка: Спочатку запустіть ваш SQL-скрипт з INSERT-ами в pgAdmin, щоб у базі з'явилися Chase та Inception!");
     return;
   }
 
@@ -128,7 +128,7 @@ async function main() {
       customer_id: existingCustomer.customer_id
     }
   });
-  console.log("✅ Новий відгук успішно додано через Prisma:", newReview);
+  console.log(" Новий відгук успішно додано через Prisma:", newReview);
 
   console.log("\n=== Перевірка зв'язків (JOIN аналог) ===");
 
@@ -140,13 +140,13 @@ async function main() {
     }
   });
 
-  console.log("🎬 Результат вибірки фільмів з їхніми відгуками:");
+  console.log(" Результат вибірки фільмів з їхніми відгуками:");
   console.log(JSON.stringify(filmsWithReviews, null, 2));
 }
 
 main()
   .catch((e) => {
-    console.error("❌ Виникла помилка під час виконання запиту:", e);
+    console.error(" Виникла помилка під час виконання запиту:", e);
   })
   .finally(async () => {
     // Обов'язково закриваємо підключення до бази даних
