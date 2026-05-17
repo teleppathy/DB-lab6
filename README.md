@@ -10,9 +10,13 @@ npm init -y
 npm install prisma --save-dev
 npx prisma init --datasource-provider postgresql
 npx prisma db pull
+```
 Після виконання команди db pull Prisma успішно проаналізувала базу даних і згенерувала початковий файл schema.prisma з існуючими таблицями (customer, film, actor тощо).
 
-[ВСТАВТЕ СКРІНШОТ: вікно терміналу з успішним виконанням команди npx prisma db pull або скріншот початкового файлу schema.prisma]
+![ ](img/1.png)
+![ ](img/2.png)
+![ ](img/3.png)
+![ ](img/4.png)
 
 2. Внесення змін до схеми (Міграції)
 У ході роботи було виконано три типи змін схеми бази даних за допомогою команди npx prisma migrate dev.
