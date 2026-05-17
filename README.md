@@ -26,7 +26,7 @@ npx prisma db pull
 
 До зміни (фрагмент моделі customer):
 
-Фрагмент коду
+```
 model customer {
   customer_id       Int       @id @default(autoincrement())
   first_name        String    @db.VarChar(32)
@@ -41,9 +41,10 @@ model customer {
   phone             String?
   // ... інші поля
 }
+```
 Команда міграції: npx prisma migrate dev --name add-phone-field
 
-[ВСТАВТЕ СКРІНШОТ: вікно терміналу з успішним застосуванням цієї міграції]
+
 
 2.2. Додавання нової таблиці
 Для реалізації можливості залишати відгуки до фільмів, було створено нову таблицю review та налаштовано двосторонні зв'язки з таблицями film та customer.
