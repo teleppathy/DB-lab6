@@ -1,0 +1,155 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../my_client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model actor {
+  actor_id   Int          @id @default(autoincrement())
+  first_name String       @db.VarChar(64)
+  last_name  String       @db.VarChar(64)
+  country    String       @db.VarChar(64)
+  birth_date DateTime?    @db.Date
+  film_actor film_actor[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model customer {
+  customer_id       Int            @id @default(autoincrement())
+  first_name        String         @db.VarChar(32)
+  last_name         String         @db.VarChar(32)
+  email             String         @unique @db.VarChar(64)
+  password          String
+  registration_date DateTime?      @db.Date
+  // birth_date        DateTime?      @db.Date
+  is_deleted        Boolean?
+  payment           payment[]
+  subscription      subscription[]
+  phone             String?
+  reviews           review[]
+}
+
+model director {
+  director_id   Int             @id @default(autoincrement())
+  first_name    String          @db.VarChar(64)
+  last_name     String          @db.VarChar(64)
+  country       String          @db.VarChar(64)
+  film_director film_director[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model film {
+  film_id         Int             @id @default(autoincrement())
+  title           String?
+  release_year    Int?
+  duration        Int?            @db.SmallInt
+  age_restriction restriction?
+  studio_id       Int?
+  studio          studio?         @relation(fields: [studio_id], references: [studio_id], onDelete: NoAction, onUpdate: NoAction)
+  film_actor      film_actor[]
+  film_director   film_director[]
+  film_genre      film_genre[]
+  isAvailable     Boolean         @default(true)
+  reviews         review[]
+}
+
+model film_actor {
+  film_id  Int
+  actor_id Int
+  actor    actor @relation(fields: [actor_id], references: [actor_id], onDelete: NoAction, onUpdate: NoAction)
+  film     film  @relation(fields: [film_id], references: [film_id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([film_id, actor_id])
+}
+
+model film_director {
+  film_id     Int
+  director_id Int
+  director    director @relation(fields: [director_id], references: [director_id], onDelete: NoAction, onUpdate: NoAction)
+  film        film     @relation(fields: [film_id], references: [film_id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([film_id, director_id])
+}
+
+model film_genre {
+  film_id  Int
+  genre_id Int
+  film     film  @relation(fields: [film_id], references: [film_id], onDelete: NoAction, onUpdate: NoAction)
+  genre    genre @relation(fields: [genre_id], references: [genre_id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([film_id, genre_id])
+}
+
+model genre {
+  genre_id    Int          @id @default(autoincrement())
+  name        String?      @unique @db.VarChar(64)
+  description String?
+  film_genre  film_genre[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model payment {
+  payment_id      Int           @id @default(autoincrement())
+  amount          Float?        @db.Real
+  payment_type    payment_type?
+  payment_date    DateTime?     @db.Date
+  status          Boolean?
+  customer_id     Int?
+  subscription_id Int?
+  customer        customer?     @relation(fields: [customer_id], references: [customer_id], onDelete: NoAction, onUpdate: NoAction)
+  subscription    subscription? @relation(fields: [subscription_id], references: [subscription_id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model studio {
+  studio_id    Int       @id @default(autoincrement())
+  name         String    @unique @db.VarChar(400)
+  country      String    @db.VarChar(300)
+  founded_date DateTime? @db.Date
+  film         film[]
+}
+
+model subscription {
+  subscription_id Int               @id @default(autoincrement())
+  start_date      DateTime?         @db.Date
+  end_date        DateTime?         @db.Date
+  type            subscription_type
+  price           Float?            @db.Real
+  customer_id     Int?
+  payment         payment[]
+  customer        customer?         @relation(fields: [customer_id], references: [customer_id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+enum payment_type {
+  cash     @map("готівка")
+  transfer @map("переказ")
+  details  @map("за реквізитами")
+  promo    @map("промокод")
+}
+
+enum restriction {
+  R_0  @map("0+")
+  R_12 @map("12+")
+  R_16 @map("16+")
+  R_18 @map("18+")
+  R_21 @map("21+")
+}
+
+enum subscription_type {
+  family   @map("сімейна")
+  student  @map("студентська")
+  standart @map("стандартна")
+}
+
+model review {
+  review_id   Int      @id @default(autoincrement())
+  rating      Int
+  comment     String?
+  created_at  DateTime @default(now())
+  film_id     Int
+  customer_id Int
+  film        film     @relation(fields: [film_id], references: [film_id])
+  customer    customer @relation(fields: [customer_id], references: [customer_id])
+}

@@ -1,6 +1,6 @@
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
+  output   = "../my_client"
 }
 
 datasource db {
@@ -24,10 +24,12 @@ model customer {
   email             String         @unique @db.VarChar(64)
   password          String
   registration_date DateTime?      @db.Date
-  birth_date        DateTime?      @db.Date
+  // birth_date        DateTime?      @db.Date
   is_deleted        Boolean?
   payment           payment[]
   subscription      subscription[]
+  phone             String?
+  reviews           review[]
 }
 
 model director {
@@ -50,6 +52,8 @@ model film {
   film_actor      film_actor[]
   film_director   film_director[]
   film_genre      film_genre[]
+  isAvailable     Boolean         @default(true)
+  reviews         review[]
 }
 
 model film_actor {
@@ -119,22 +123,33 @@ model subscription {
 }
 
 enum payment_type {
-  // готівка @map("готівка")
-  // переказ @map("переказ")
-  // за реквізитами @map("за реквізитами")
-  // промокод @map("промокод")
+  cash     @map("готівка")
+  transfer @map("переказ")
+  details  @map("за реквізитами")
+  promo    @map("промокод")
 }
 
 enum restriction {
-  // 0+ @map("0+")
-  // 12+ @map("12+")
-  // 16+ @map("16+")
-  // 18+ @map("18+")
-  // 21+ @map("21+")
+  R_0  @map("0+")
+  R_12 @map("12+")
+  R_16 @map("16+")
+  R_18 @map("18+")
+  R_21 @map("21+")
 }
 
 enum subscription_type {
-  // сімейна @map("сімейна")
-  // студентська @map("студентська")
-  // стандартна @map("стандартна")
+  family   @map("сімейна")
+  student  @map("студентська")
+  standart @map("стандартна")
+}
+
+model review {
+  review_id   Int      @id @default(autoincrement())
+  rating      Int
+  comment     String?
+  created_at  DateTime @default(now())
+  film_id     Int
+  customer_id Int
+  film        film     @relation(fields: [film_id], references: [film_id])
+  customer    customer @relation(fields: [customer_id], references: [customer_id])
 }
