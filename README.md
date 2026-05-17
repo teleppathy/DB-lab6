@@ -44,14 +44,15 @@ model customer {
 ```
 Команда міграції: npx prisma migrate dev --name add-phone-field
 
-
+![ ](img/5.png)
+![ ](img/6.png)
 
 2.2. Додавання нової таблиці
 Для реалізації можливості залишати відгуки до фільмів, було створено нову таблицю review та налаштовано двосторонні зв'язки з таблицями film та customer.
 
 Доданий код у schema.prisma:
 
-Фрагмент коду
+```
 model review {
   review_id   Int      @id @default(autoincrement())
   rating      Int
@@ -62,16 +63,17 @@ model review {
   customer    customer @relation(fields: [customer_id], references: [customer_id])
   film        film     @relation(fields: [film_id], references: [film_id])
 }
+```
 Команда міграції: npx prisma migrate dev --name add-review-table
 
-[ВСТАВТЕ СКРІНШОТ: структура нової таблиці у Prisma Studio або pgAdmin]
+![ ](img/7.png)
 
 2.3. Видалення стовпця
 З таблиці customer було видалено поле birth_date, оскільки воно більше не використовується в логіці роботи.
 
 Команда міграції: npx prisma migrate dev --name drop-birth_date-from-customer
 
-[ВСТАВТЕ СКРІНШОТ: попередження Prisma про втрату даних під час видалення стовпця та підтвердження (клавіша 'y')]
+![ ](img/8.png)
 
 3. Перевірка за допомогою клієнта Prisma
 Для перевірки працездатності оновленої схеми та коректності налаштованих зв'язків було створено Node.js скрипт test_prisma.js. Для підключення до бази даних використовувався сучасний підхід з @prisma/adapter-pg.
@@ -83,25 +85,41 @@ model review {
 Складний запит (аналог JOIN), що витягує фільм "Inception" разом з усіма пов'язаними відгуками.
 
 Код скрипту перевірки (test_prisma.js):
-
-JavaScript
+```
 const { PrismaClient } = require('@prisma/client');
 const { PrismaPg } = require('@prisma/adapter-pg');
 const { Pool } = require('pg');
 
 const pool = new Pool({
-  connectionString: 'postgresql://postgres:ВАШ_ПАРОЛЬ@localhost:5432/postgres?schema=public',
+  connectionString: 'postgresql://postgres:IO-43toru26@localhost:5432/postgres?schema=public' ,
 });
 
 const adapter = new PrismaPg(pool);
-const prisma = new PrismaClient({ adapter });
+
+const prisma = new PrismaClient({
+  adapter,
+  log: ['info', 'warn', 'error'],
+});
+
 
 async function main() {
   console.log("=== Старт перевірки клієнта Prisma ===");
 
-  const existingCustomer = await prisma.customer.findFirst({ where: { email: 'chase@example.com' } });
-  const existingFilm = await prisma.film.findFirst({ where: { title: 'Inception' } });
+  // 1. Спочатку знайдемо клієнта та фільм, які вже є в базі (з ваших тестів)
+  const existingCustomer = await prisma.customer.findFirst({
+    where: { email: 'chase@example.com' }
+  });
 
+  const existingFilm = await prisma.film.findFirst({
+    where: { title: 'Inception' }
+  });
+
+  if (!existingCustomer || !existingFilm) {
+    console.log("❌ Помилка: Спочатку запустіть ваш SQL-скрипт з INSERT-ами в pgAdmin, щоб у базі з'явилися Chase та Inception!");
+    return;
+  }
+
+  // 2. Тестуємо вставку (INSERT) нової таблиці 'review' через Prisma Client
   const newReview = await prisma.review.create({
     data: {
       rating: 10,
@@ -113,61 +131,30 @@ async function main() {
   console.log("✅ Новий відгук успішно додано через Prisma:", newReview);
 
   console.log("\n=== Перевірка зв'язків (JOIN аналог) ===");
+
+  // 3. Тестуємо складний запит: вибираємо фільми та підтягуємо пов'язані відгуки
   const filmsWithReviews = await prisma.film.findMany({
     where: { title: 'Inception' },
-    include: { reviews: true }
+    include: {
+      reviews: true // підтягуємо масив відгуків для кожного фільму
+    }
   });
 
   console.log("🎬 Результат вибірки фільмів з їхніми відгуками:");
   console.log(JSON.stringify(filmsWithReviews, null, 2));
 }
 
-main().finally(async () => { await prisma.$disconnect(); });
+main()
+  .catch((e) => {
+    console.error("❌ Виникла помилка під час виконання запиту:", e);
+  })
+  .finally(async () => {
+    // Обов'язково закриваємо підключення до бази даних
+    await prisma.$disconnect();
+  });
+```
 Результат виконання скрипту (вивід терміналу):
 
-JSON
-=== Старт перевірки клієнта Prisma ===
-✅ Новий відгук успішно додано через Prisma: {
-  review_id: 3,
-  rating: 10,
-  comment: 'Absolutely mind-blowing masterpiece! (Створено через Prisma Client)',
-  created_at: 2026-05-17T20:29:15.327Z,
-  film_id: 5,
-  customer_id: 7
-}
-
-=== Перевірка зв'язків (JOIN аналог) ===
-🎬 Результат вибірки фільмів з їхніми відгуками:
-[
-  {
-    "film_id": 5,
-    "title": "Inception",
-    "release_year": 2010,
-    "duration": 148,
-    "age_restriction": "R_12",
-    "studio_id": 7,
-    "isAvailable": true,
-    "reviews": [
-      {
-        "review_id": 1,
-        "rating": 9,
-        "comment": "^.^! Great movie.",
-        "created_at": "2026-05-17T19:28:32.295Z",
-        "film_id": 5,
-        "customer_id": 7
-      },
-      {
-        "review_id": 3,
-        "rating": 10,
-        "comment": "Absolutely mind-blowing masterpiece! (Створено через Prisma Client)",
-        "created_at": "2026-05-17T20:29:15.327Z",
-        "film_id": 5,
-        "customer_id": 7
-      }
-    ]
-  }
-]
-[ВСТАВТЕ СКРІНШОТ: вікно терміналу з цим виводом JSON або скріншот з Prisma Studio, де видно доданий відгук]
 
 Висновок
 Під час виконання лабораторної роботи було успішно налаштовано Prisma ORM. Продемонстровано процес еволюції схеми бази даних за допомогою міграцій (додавання таблиць, модифікація полів). За допомогою клієнта Prisma та адаптера PostgreSQL успішно виконано вставку даних та складну вибірку зі зв'язаних таблиць. Усі зміни схеми та міграції коректно відображаються у PostgreSQL.
